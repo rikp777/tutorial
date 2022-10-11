@@ -9,6 +9,7 @@ import youtube.java.locker.Utils;
 import youtube.java.locker.exceptions.ToManyWrongAttemptsException;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -39,13 +40,25 @@ public class Wall {
         return lockers[0].length;
     }
 
+    public int getAvailableAmount(){
+        //get all available lockers
+        int availableAmount = 0;
+        for(int i = 0; i < lockers.length; i++){
+            for(int j = 0; j < lockers[i].length; j++){
+                if(!lockers[i][j].isLocked())
+                    availableAmount++;
+            }
+        }
+        return availableAmount;
+    }
+
     /**
      * Build a grid of lockers
      * @param maxWidth the width of the grid
      * @param maxHeight the height of the grid
      * @return List<Locker> the list of lockers
      */
-    public Locker[][] buildGrid(int maxWidth, int maxHeight){
+    private Locker[][] buildGrid(int maxWidth, int maxHeight){
         Locker[][] lockers = new Locker[maxWidth][maxHeight];
         for (int i = 0; i < maxWidth; i++) {
             for (int j = 0; j < maxHeight; j++) {
@@ -120,6 +133,7 @@ public class Wall {
             String password
     )
     {
+        System.out.println("Tenant: " + tenant.getName() + " is trying to reserve locker: [" + lockerId + "] with password: [" + password + "] ");
         Locker locker = getLocker(lockerId);
         History lockerOccupied = new History(
                 lockedAt,
@@ -150,19 +164,25 @@ public class Wall {
     }
 
     public String openLocker(String lockerId, String password){
+        System.out.println("Trying to open locker: [" + lockerId + "] with password: [" + password + "] ");
+
         var locker = getLocker(lockerId);
         Optional<History> tenantLocker = historyData.stream()
                 .filter(history -> history.getLocker().equals(locker))
                 .findFirst();
 
         if(tenantLocker.isPresent()){
+            History history = tenantLocker.get();
             try{
-                String secret = tenantLocker.get().getLocker().unlock(password);
-                return secret;
-            }catch (ToManyWrongAttemptsException exception){
-                //todo debounce message
-                log.info("Informing tenant: " + tenantLocker.get().getTenant().getName() + " that they have too many wrong attempts on locker: " + lockerId);
+                String secret = history.getLocker().unlock(password);
 
+                if(secret != null){
+                    System.out.println("Thank you for using our locker wall " + history.getTenant().getName() + ", until next time!");
+                    System.out.println("Your secret data is: [" + secret + "]");
+                    return secret;
+                }
+            }catch (ToManyWrongAttemptsException exception){
+                tenantLocker.get().getTenant().notify("Too many wrong attempts");
                 return null;
             }
         }
@@ -187,5 +207,44 @@ public class Wall {
             }
         }
         return result.toString();
+    }
+
+
+    public void print(){
+        System.out.println();
+        System.out.println("Locker Wall: " + this.name);
+        System.out.println("Available lockers: " + this.getAvailableAmount());
+        for (int i = 0; i < this.lockers.length; i++){
+            System.out.print("");
+            for (int j = 0; j < this.lockers[0].length; j++){
+                System.out.print("");
+            }
+            System.out.println();
+
+            for (int j = 0; j < this.lockers[0].length; j++){
+                if(this.lockers[i][j].isLocked()){
+                    System.out.print("📕");
+                } else {
+                    System.out.print("\uD83D\uDCD7");
+                }
+
+                System.out.print(this.lockers[i][j].getId() + " \t\t");
+
+            }
+            for (int j = 0; j < this.lockers[0].length; j++){
+                if(this.lockers[i][j].isLocked()){
+                     int finalI = i;
+                     int finalJ = j;
+                     History lockMetaData = historyData.stream()
+                            .filter(history -> history.getLocker().equals(this.lockers[finalI][finalJ]))
+                            .findFirst()
+                            .get();
+                    System.out.print(lockers[i][j].getId() + " Locked at: " + lockMetaData.getLockedAt().format(DateTimeFormatter.ofPattern("MM/dd/yyyy 'at' hh:mma")) + " \t");
+                }
+            }
+
+            System.out.println();
+        }
+        System.out.println();
     }
 }

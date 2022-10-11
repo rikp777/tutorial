@@ -10,9 +10,8 @@ import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
-        Wall wall = new Wall("Wall one", 5, 5);
-
-        System.out.println(wall);
+        Wall wall = new Wall("Proxy", 5, 5);
+        wall.print();
 
         Tenant tenant = new Tenant("Rik Peeters");
 
@@ -25,17 +24,17 @@ public class Main {
                 "I like to store my stuff here, and its very secret",
                 password
         );
-        System.out.println(wall);
+
+        wall.print();
 
         wall.openLocker("B1", "wrong password");
         wall.openLocker("B1", "wrong password");
-        wall.openLocker("B1", "wrong password");
-        wall.openLocker("B1", "wrong password");
-        wall.openLocker("B1", "wrong password");
+//        wall.openLocker("B1", "wrong password");
+//        wall.openLocker("B1", "wrong password");
+//        wall.openLocker("B1", "wrong password");
 
-        wall.openLocker("B1", password);
+        String secret = wall.openLocker("B1", password);
 
-        System.out.println(wall);
-
+        wall.print();
     }
 }

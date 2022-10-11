@@ -41,9 +41,9 @@ public class Locker {
             this.password = password;
             this.mySecretData = mySecretData;
             this.isLocked = true;
-            log.info("Locker " + this.id + " is locked");
+            System.out.println("Locker " + this.id + " is locked");
         }else{
-            log.info("Locker is already locked");
+            System.out.println("Locker is already locked");
         }
     }
 
@@ -54,13 +54,13 @@ public class Locker {
         }
 
         if(this.password.equals(password)){
-            log.info("Locker " + this.id + " is unlocked");
+            System.out.println("Locker " + this.id + " is unlocked");
             this.isLocked = false;
             return this.mySecretData;
         }
 
         this.wrongPasswordCount++;
-        log.warning("Locker " + this.id + " wrong password [" + (maxAttempts - this.wrongPasswordCount) + " attempts left]");
+        System.out.println("Locker " + this.id + " wrong password [" + (maxAttempts - this.wrongPasswordCount) + " attempts left]");
 
         return null;
     }
